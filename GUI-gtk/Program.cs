@@ -32,6 +32,8 @@ namespace CKAN
 
         private InnerConnect inner = new InnerConnect();
 
+        KSPManager _manager;
+
         static void Main(string[] args)
         {
             //
@@ -58,14 +60,14 @@ namespace CKAN
             //Modify default theme
             //
             Console.WriteLine("Old theme name:" + Gtk.Settings.Default.ThemeName);
-            Gtk.Settings.Default.ThemeName = "gtk-win32";
+            gtkSettings.ThemeName = "gtk-win32";
             Console.WriteLine("New theme name:" + Gtk.Settings.Default.ThemeName);
 
             //
-            //Modify default font size
+            //Modify default font size - by default it is too big
             //
             Console.WriteLine("Font name:" + Gtk.Settings.Default.FontName);
-            Gtk.Settings.Default.FontName = "Segoe UI 9";
+            gtkSettings.FontName = "Segoe UI 8";
 
             Builder builder = new Builder(null, "CKAN.resources.ckan-gtk-glade.glade", null);
                             
@@ -108,6 +110,10 @@ namespace CKAN
         {            
             DeleteEvent += (object sender, DeleteEventArgs args) =>
             {
+                if(_manager != null && _manager.CurrentInstance != null)
+                {                    
+                    _manager.CurrentInstance.Dispose();
+                }
                 Application.Quit();
                 args.RetVal = true;
             };
@@ -188,15 +194,16 @@ namespace CKAN
             treeModel.AppendValues(false, UpdateState.CANNOT_SELECT, "test1", "test2", "test5");
 
             GtkUser user = new GtkUser();
-            KSPManager manager = new KSPManager(user);
-            if (manager.CurrentInstance == null && manager.GetPreferredInstance() == null)
+            _manager = new KSPManager(user);
+            if (_manager.CurrentInstance == null && _manager.GetPreferredInstance() == null)
             {
                 Hide();
 
                 return;
             }
+            
 
-            var CurrentInstance = manager.CurrentInstance;
+            var CurrentInstance = _manager.CurrentInstance;
             KspVersionCriteria versionCriteria = CurrentInstance.VersionCriteria();
             IRegistryQuerier registry = RegistryManager.Instance(CurrentInstance).registry;
             var mods = new HashSet<CkanModule>(registry.Available(versionCriteria));
